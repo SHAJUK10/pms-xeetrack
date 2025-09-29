@@ -12,28 +12,7 @@ import { TaskManager } from '../Tasks/TaskManager';
 import { ProjectCommentSection } from '../Comments/ProjectCommentSection';
 import { BrochureDesign } from '../Brochure/BrochureDesign';
 import { Project, User, Lead } from '../../types';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  BarChart3, 
-  FolderOpen, 
-  Layers, 
-  CheckSquare, 
-  Upload, 
-  MessageSquare,
-  Users,
-  TrendingUp,
-  Calendar,
-  Eye,
-  Edit,
-  Trash2,
-  X,
-  DollarSign,
-  Phone,
-  Mail,
-  FileText
-} from 'lucide-react';
+import { Plus, Search, Filter, BarChart3, FolderOpen, Layers, CheckSquare, Upload, MessageSquare, Users, TrendingUp, Calendar, Eye, CreditCard as Edit, Trash2, X, DollarSign, Phone, Mail, FileText } from 'lucide-react';
 
 interface ManagerDashboardProps {
   activeView: string;
