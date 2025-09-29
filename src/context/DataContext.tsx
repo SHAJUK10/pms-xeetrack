@@ -519,6 +519,69 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Load tasks from database
+  const loadTasks = async () => {
+    if (!supabase || !user) {
+      console.warn('Supabase or user not available - cannot load tasks');
+      return;
+    }
+
+    try {
+      console.log('Loading tasks for user:', user.id, 'Role:', user.role);
+      
+      let query = supabase.from('tasks').select('*').order('created_at', { ascending: false });
+      
+      // Apply role-based filtering
+      if (user.role === 'client') {
+        // Clients can see tasks in their projects
+        const clientProjects = projects.map(p => p.id);
+        if (clientProjects.length > 0) {
+          query = query.in('project_id', clientProjects);
+        } else {
+          // No projects, no tasks
+          setTasks([]);
+          return;
+        }
+      } else if (user.role === 'employee') {
+        // Employees can see tasks assigned to them or in their assigned projects
+        const assignedProjects = projects.filter(p => p.assigned_employees.includes(user.id)).map(p => p.id);
+        if (assignedProjects.length > 0) {
+          query = query.or(`assigned_to.eq.${user.id},project_id.in.(${assignedProjects.join(',')})`);
+        } else {
+          query = query.eq('assigned_to', user.id);
+        }
+      }
+      // Managers can see all tasks (no additional filter)
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error loading tasks:', error);
+        return;
+      }
+
+      if (data) {
+        const mappedTasks: Task[] = data.map(task => ({
+          id: task.id,
+          project_id: task.project_id,
+          title: task.title,
+          description: task.description,
+          assigned_to: task.assigned_to,
+          status: task.status || 'open',
+          priority: task.priority || 'medium',
+          deadline: task.deadline,
+          created_at: task.created_at,
+          updated_at: task.updated_at
+        }));
+        
+        setTasks(mappedTasks);
+        console.log('Tasks loaded successfully:', mappedTasks.length);
+      }
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      console.warn('Failed to load tasks from Supabase. Using existing task data.');
+    }
+  };
   // Compute project IDs the current user can access (role-based)
   const fetchAccessibleProjectIds = async (): Promise<string[] | null> => {
     if (!supabase || !user) {
@@ -780,11 +843,39 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
   
   const updateTaskStatus = (taskId: string, status: 'open' | 'in-progress' | 'done') => {
-    setTasks(prev => 
-      prev.map(task => 
-        task.id === taskId ? { ...task, status } : task
-      )
-    );
+    if (!supabase) {
+      console.warn('Supabase not configured - cannot update task status');
+      return;
+    }
+
+    const updateTaskStatusAsync = async () => {
+      try {
+        console.log('Updating task status:', taskId, status);
+        
+        const { data, error } = await supabase
+          .from('tasks')
+          .update({ status })
+          .eq('id', taskId)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error updating task status:', error);
+          throw error;
+        }
+
+        console.log('Task status updated successfully:', data.id);
+        
+        // Reload tasks to update the UI
+        await loadTasks();
+        
+      } catch (error) {
+        console.error('Error updating task status:', error);
+        throw error;
+      }
+    };
+
+    return updateTaskStatusAsync();
   };
   
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
@@ -1045,6 +1136,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           await refreshUsers();
           await loadStages();
           await loadFiles();
+          await loadTasks();
         } catch (error) {
           console.error('Error initializing data:', error);
         }
