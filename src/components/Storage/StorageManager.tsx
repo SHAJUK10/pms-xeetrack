@@ -1,3 +1,4 @@
+import React from 'react';
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -9,10 +10,15 @@ interface StorageManagerProps {
 
 export function StorageManager({ projectId }: StorageManagerProps) {
   const { user } = useAuth();
-  const { files, projects, stages, uploadFileFromInput } = useData();
+  const { files, projects, stages, uploadFileFromInput, loadFiles } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterUploader, setFilterUploader] = useState('all');
+
+  // Load files when component mounts or projectId changes
+  React.useEffect(() => {
+    loadFiles();
+  }, [projectId, loadFiles]);
 
   const getFileIcon = (fileType: string) => {
     switch (fileType.toLowerCase()) {

@@ -26,7 +26,7 @@ interface DataContextType {
   updateCommentTaskStatus: (taskId: string, status: 'open' | 'in-progress' | 'done') => void;
   updateStageApproval: (stageId: string, status: 'approved' | 'rejected', comment?: string) => void;
   uploadFile: (fileData: Omit<File, 'id' | 'timestamp'>) => void;
-  uploadFileFromInput: (stageId: string, file: globalThis.File, projectId: string, uploaderName: string) => Promise<void>;
+  uploadFileFromInput: (stageId: string, file: globalThis.File, uploaderName: string) => Promise<void>;
   uploadBrochureImage: (file: globalThis.File, projectId: string) => Promise<string>;
   updateStageProgress: (stageId: string, progress: number) => void;
   scheduleMeeting: (meeting: Omit<Meeting, 'id'>) => void;
@@ -56,6 +56,7 @@ interface DataContextType {
   createUserAccount: (params: { email: string; password: string; full_name: string; role: 'employee' | 'client' }) => Promise<{ id: string } | null>;
   refreshUsers: () => Promise<void>;
   loadProjects: () => Promise<void>;
+  loadFiles: () => Promise<void>;
   deleteFile: (fileId: string, storagePath: string) => Promise<void>;
 }
 
@@ -229,6 +230,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([]);
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[] | null>(null);
+
+  const loadStages = async () => {
+    if (!supabase || !user) {
+      console.warn('Supabase or user not available - cannot load stages');
+      return;
+    }
+
+    try {
+      console.log('Loading stages from database');
+      
+      const { data, error } = await supabase
+        .from('stages')
+        .select('*')
+        .order('order', { ascending: true });
+
+      if (error) {
+        console.error('Error loading stages:', error);
+        return;
+      }
+
+      if (data) {
+        const mappedStages: Stage[] = data.map(stage => ({
+          id: stage.id,
+          project_id: stage.project_id,
+          name: stage.name,
+          notes: stage.notes || '',
+          progress_percentage: stage.progress_percentage || 0,
+          approval_status: stage.approval_status || 'pending',
+          files: [],
+          comments: [],
+          order: stage.order || 0
+        }));
+        
+        setStages(mappedStages);
+        console.log('Stages loaded successfully:', mappedStages.length);
+      }
+    } catch (error) {
+      console.error('Error loading stages:', error);
+    }
+  };
 
   // Load projects from database
   const loadProjects = async () => {
@@ -428,20 +469,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Load files from database
-  const loadFiles = async (projectId?: string) => {
+  const loadFiles = async () => {
     if (!supabase) {
       console.warn('Supabase not configured - cannot load files');
       return;
     }
 
     try {
-      console.log('Loading files for project:', projectId || 'all');
-      let query = supabase.from('files').select('*').order('timestamp', { ascending: false });
-
-      // Filter by projectId if provided
-      if (projectId) {
-        query = query.eq('project_id', projectId);
-      }
+      console.log('Loading files from database');
+      const query = supabase.from('files').select('*').order('timestamp', { ascending: false });
 
       const { data, error } = await query;
 
@@ -530,9 +566,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Upload file from input (modified for Storage Section)
-  const uploadFileFromInput = async (stageId: string, file: globalThis.File, projectId: string, uploaderName: string) => {
+  const uploadFileFromInput = async (stageId: string, file: globalThis.File, uploaderName: string) => {
     if (!supabase || !user) {
       console.warn('Supabase or user not available');
+      return;
+    }
+
+    // Find project ID from stage ID
+    const stage = stages.find(s => s.id === stageId);
+    const projectId = stage?.project_id;
+    
+    if (!projectId) {
+      console.error('Could not find project ID for stage:', stageId);
       return;
     }
 
@@ -575,7 +620,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (dbError) throw dbError;
 
       // Reload files for the project
-      await loadFiles(projectId);
+      await loadFiles();
       console.log('File uploaded successfully:', file.name);
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -611,8 +656,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .eq('id', fileId);
       if (dbError) throw dbError;
 
-      // Update local state
-      setFiles(files.filter(f => f.id !== fileId));
+      // Reload files to update UI
+      await loadFiles();
       console.log('File deleted successfully:', fileId);
     } catch (error) {
       console.error('Error deleting file:', error);
@@ -979,7 +1024,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // Load all data when user is available
         loadProjects();
         refreshUsers();
-        loadFiles();
+        loadStages();
+        await loadFiles();
       }).catch(error => console.error('Error initializing data:', error));
     }
   }, [user]);
@@ -1036,6 +1082,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       createUserAccount,
       refreshUsers,
       loadProjects,
+      loadFiles,
       deleteFile
     }}>
       {children}
