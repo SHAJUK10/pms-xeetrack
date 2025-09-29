@@ -232,13 +232,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[] | null>(null);
 
   const loadStages = async () => {
-    if (!supabase) {
-      console.warn('Supabase not configured - using mock data');
-      return;
-    }
-    
-    if (!user) {
-      console.warn('User not available - cannot load stages');
+    if (!supabase || !user) {
+      console.warn('Supabase or user not available - cannot load stages');
       return;
     }
 
@@ -251,8 +246,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .order('order', { ascending: true });
 
       if (error) {
-        console.error('Error loading stages from database:', error);
-        console.log('Falling back to mock data');
+        console.error('Error loading stages:', error);
         return;
       }
 
@@ -273,21 +267,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         console.log('Stages loaded successfully:', mappedStages.length);
       }
     } catch (error) {
-      console.error('Network error loading stages:', error);
-      console.log('This is likely due to missing or incorrect Supabase configuration');
-      console.log('Falling back to mock data');
+      console.error('Error loading stages:', error);
     }
   };
 
   // Load projects from database
   const loadProjects = async () => {
-    if (!supabase) {
-      console.warn('Supabase not configured - using mock data');
-      return;
-    }
-    
-    if (!user) {
-      console.warn('User not available - cannot load projects');
+    if (!supabase || !user) {
+      console.warn('Supabase or user not available - cannot load projects');
       return;
     }
 
@@ -308,8 +295,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error loading projects from database:', error);
-        console.log('Falling back to mock data');
+        console.error('Error loading projects:', error);
         return;
       }
 
@@ -332,17 +318,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         console.log('Projects loaded successfully:', mappedProjects.length);
       }
     } catch (error) {
-      console.error('Network error loading projects:', error);
-      console.log('This is likely due to missing or incorrect Supabase configuration');
-      console.log('Check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
-      console.log('Falling back to mock data');
+      console.error('Error loading projects:', error);
     }
   };
 
   // Load users from database
   const refreshUsers = async () => {
     if (!supabase) {
-      console.warn('Supabase not configured - using mock data');
+      console.warn('Supabase not configured - cannot load users');
       return;
     }
 
@@ -355,8 +338,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .order('full_name', { ascending: true });
 
       if (error) {
-        console.error('Error loading users from database:', error);
-        console.log('Falling back to mock data');
+        console.error('Error loading users:', error);
         return;
       }
 
@@ -372,9 +354,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         console.log('Users loaded successfully:', mappedUsers.length);
       }
     } catch (error) {
-      console.error('Network error loading users:', error);
-      console.log('This is likely due to missing or incorrect Supabase configuration');
-      console.log('Falling back to mock data');
+      console.error('Error loading users:', error);
     }
   };
 
@@ -491,19 +471,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Load files from database
   const loadFiles = async () => {
     if (!supabase) {
-      console.warn('Supabase not configured - using mock data');
+      console.warn('Supabase not configured - cannot load files');
       return;
     }
 
     try {
-      console.log('Loading files from database');
+      console.log('Loading files from database with Supabase URL:', supabaseUrl);
       const query = supabase.from('files').select('*').order('timestamp', { ascending: false });
 
       const { data, error } = await query;
 
       if (error) {
-        console.error('Error loading files from database:', error);
-        console.log('Falling back to mock data');
+        console.error('Supabase error loading files:', error);
         return;
       }
 
@@ -533,9 +512,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         console.log('Files loaded successfully:', mappedFiles.length);
       }
     } catch (error) {
-      console.error('Network error loading files:', error);
-      console.log('This is likely due to missing or incorrect Supabase configuration');
-      console.log('Falling back to mock data');
+      console.error('Error loading files:', error);
     }
   };
 
@@ -613,18 +590,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       // Upload file to Supabase Storage
       const storagePath = `projects/${projectId}/${file.name}`;
-      console.log('Uploading file to storage:', storagePath);
+      console.log('Uploading file to storage:', storagePath, 'Bucket: project-files');
       const { data: storageData, error: storageError } = await supabase.storage
-        .from('files')
+        .from('project-files')
         .upload(storagePath, file, { upsert: true });
-      if (storageError) throw storageError;
+      if (storageError) {
+        console.error('Storage error:', storageError);
+        throw storageError;
+      }
 
       // Save file metadata to database
       const fileData: Omit<File, 'id' | 'timestamp'> = {
         stage_id: stageId,
         project_id: projectId,
         filename: file.name,
-        file_url: `${supabaseUrl}/storage/v1/object/public/files/${storagePath}`,
+        file_url: `${supabaseUrl}/storage/v1/object/public/project-files/${storagePath}`,
         storage_path: storagePath,
         uploaded_by: user.id,
         uploader_name: uploaderName,
@@ -640,7 +620,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       };
 
       const { error: dbError } = await supabase.from('files').insert(fileData);
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database error inserting file metadata:', dbError);
+        throw dbError;
+      }
 
       // Reload files for the project
       await loadFiles();
@@ -666,18 +649,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
 
       // Delete from Supabase Storage
-      console.log('Deleting file from storage:', storagePath);
+      console.log('Deleting file from storage:', storagePath, 'Bucket: project-files');
       const { error: storageError } = await supabase.storage
-        .from('files')
+        .from('project-files')
         .remove([storagePath]);
-      if (storageError) throw storageError;
+      if (storageError) {
+        console.error('Storage error:', storageError);
+        throw storageError;
+      }
 
       // Delete from database
       const { error: dbError } = await supabase
         .from('files')
         .delete()
         .eq('id', fileId);
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database error deleting file:', dbError);
+        throw dbError;
+      }
 
       // Reload files to update UI
       await loadFiles();
@@ -703,7 +692,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       id: uuidv4(),
       project_id: data.project_id,
       text: data.text,
-      added_by: data.added_by,
+      added_by: data.add_by,
       author_name: user?.name || 'Unknown',
       author_role: data.author_role as 'manager' | 'employee' | 'client',
       timestamp: new Date().toISOString()
@@ -1044,25 +1033,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (user) {
       const initializeData = async () => {
         try {
-          if (supabase) {
-            const ids = await fetchAccessibleProjectIds();
-            setAccessibleProjectIds(ids);
-            // Load all data when user is available
-            await loadProjects();
-            await refreshUsers();
-            await loadStages();
-            await loadFiles();
-          } else {
-            console.warn('Supabase not configured - check your .env file');
-            console.log('Required environment variables:');
-            console.log('- VITE_SUPABASE_URL');
-            console.log('- VITE_SUPABASE_ANON_KEY');
-            console.log('Using mock data for development');
-          }
+          console.log('Initializing data for user:', user.id);
+          const ids = await fetchAccessibleProjectIds();
+          console.log('Accessible project IDs:', ids);
+          setAccessibleProjectIds(ids);
+          // Load all data when user is available
+          await loadProjects();
+          await refreshUsers();
+          await loadStages();
+          await loadFiles();
         } catch (error) {
-          console.error('Network error initializing data:', error);
-          console.log('This is likely due to missing or incorrect Supabase configuration');
-          console.log('Check your .env file and ensure your Supabase project is accessible');
+          console.error('Error initializing data:', error);
         }
       };
 
