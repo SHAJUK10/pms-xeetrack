@@ -27,11 +27,6 @@ export function LoginForm() {
     }
   };
 
-  const handleDemoLogin = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('demo123');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -95,35 +90,8 @@ export function LoginForm() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          {/* <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-4 text-center">Demo Accounts:</p>
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('manager@xeetrack.com')}
-                className="w-full p-2 text-left bg-blue-50 hover:bg-blue-100 rounded-lg text-sm transition-colors"
-              >
-                <strong>Manager:</strong> manager@xeetrack.com
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('employee@xeetrack.com')}
-                className="w-full p-2 text-left bg-green-50 hover:bg-green-100 rounded-lg text-sm transition-colors"
-              >
-                <strong>Employee:</strong> employee@xeetrack.com
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('client@xeetrack.com')}
-                className="w-full p-2 text-left bg-red-50 hover:bg-red-100 rounded-lg text-sm transition-colors"
-              >
-                <strong>Client:</strong> client@xeetrack.com
-              </button>
-            </div>
-          </div>
         </div>
-      </div> */} 
+      </div>
 
       <div className="mt-4 text-center">
         <p className="text-xs text-gray-400">© 2025 XeeTrack. All rights reserved.</p>
@@ -131,4 +99,5 @@ export function LoginForm() {
     </div>
   );
 }
+
 console.log('VITE_SUPABASE_URL', import.meta.env.VITE_SUPABASE_URL);
