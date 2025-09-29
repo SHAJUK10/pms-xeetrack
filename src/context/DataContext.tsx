@@ -513,6 +513,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading files:', error);
+      console.warn('Failed to connect to Supabase. Check your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
+      console.warn('Using mock files data instead.');
+      // Don't throw the error, just log it and continue with existing mock data
     }
   };
 
