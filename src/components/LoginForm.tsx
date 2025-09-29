@@ -96,7 +96,7 @@ export function LoginForm() {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          {/* <div className="mt-8 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 mb-4 text-center">Demo Accounts:</p>
             <div className="space-y-2">
               <button
@@ -123,7 +123,7 @@ export function LoginForm() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */} 
 
       <div className="mt-4 text-center">
         <p className="text-xs text-gray-400">© 2025 XeeTrack. All rights reserved.</p>
