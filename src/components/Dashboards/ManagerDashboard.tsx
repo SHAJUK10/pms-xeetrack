@@ -26,7 +26,7 @@ export function ManagerDashboard({ activeView, onViewChange }: ManagerDashboardP
       setShowProjectDetail(false);
       setSelectedProject(null);
     }
-  }, [activeView, showProjectDetail]);
+  }, [activeView]);
 
   const { projects, stages, commentTasks, leads, users, brochureProjects, createLead, updateLead, deleteLead, createUserAccount, refreshUsers, loadProjects, updateProject } = useData();
   const { user } = useAuth();

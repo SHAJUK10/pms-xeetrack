@@ -38,7 +38,7 @@ export function EmployeeDashboard({ activeView, onViewChange }: EmployeeDashboar
       setShowProjectDetail(false);
       setSelectedProject(null);
     }
-  }, [activeView, showProjectDetail]);
+  }, [activeView]);
 
   const { user } = useAuth();
   const { projects, commentTasks, stages, tasks, brochureProjects, updateProject } = useData();

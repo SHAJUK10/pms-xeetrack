@@ -21,7 +21,7 @@ export function ClientDashboard({ activeView, onViewChange }: ClientDashboardPro
       setShowProjectDetail(false);
       setSelectedProject(null);
     }
-  }, [activeView, showProjectDetail]);
+  }, [activeView]);
 
   const { user } = useAuth();
   const { projects, stages, commentTasks, brochureProjects } = useData();
