@@ -3,6 +3,15 @@ import { User } from '../types';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { supabase as externalSupabase } from '../superBaseClient';
 
+// Debug environment variables
+console.log('=== ENVIRONMENT VARIABLES DEBUG ===');
+console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Set (length: ' + import.meta.env.VITE_SUPABASE_ANON_KEY.length + ')' : 'Missing');
+console.log('VITE_AUTO_CREATE_MANAGER:', import.meta.env.VITE_AUTO_CREATE_MANAGER);
+console.log('VITE_MANAGER_EMAIL:', import.meta.env.VITE_MANAGER_EMAIL);
+console.log('VITE_MANAGER_PASSWORD:', import.meta.env.VITE_MANAGER_PASSWORD ? 'Set' : 'Missing');
+console.log('====================================');
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
@@ -22,6 +31,14 @@ let supabase: SupabaseClient | null = externalSupabase ?? null;
 if (!supabase && supabaseUrl && supabaseAnonKey) {
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
+
+// Debug Supabase client initialization
+console.log('=== SUPABASE CLIENT DEBUG ===');
+console.log('External supabase client:', externalSupabase ? 'Available' : 'Not available');
+console.log('Final supabase client:', supabase ? 'Initialized' : 'Not initialized');
+console.log('Supabase URL from env:', supabaseUrl);
+console.log('Supabase Anon Key from env:', supabaseAnonKey ? 'Set' : 'Missing');
+console.log('=============================');
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
