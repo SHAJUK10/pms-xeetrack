@@ -32,6 +32,14 @@ interface EmployeeDashboardProps {
 }
 
 export function EmployeeDashboard({ activeView, onViewChange }: EmployeeDashboardProps) {
+  // Watch for activeView changes and reset project detail view when navigating
+  React.useEffect(() => {
+    if (activeView !== 'projects' && showProjectDetail) {
+      setShowProjectDetail(false);
+      setSelectedProject(null);
+    }
+  }, [activeView, showProjectDetail]);
+
   const { user } = useAuth();
   const { projects, commentTasks, stages, tasks, brochureProjects, updateProject } = useData();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);

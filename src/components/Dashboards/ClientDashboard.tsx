@@ -15,6 +15,14 @@ interface ClientDashboardProps {
 }
 
 export function ClientDashboard({ activeView, onViewChange }: ClientDashboardProps) {
+  // Watch for activeView changes and reset project detail view when navigating
+  React.useEffect(() => {
+    if (activeView !== 'project-overview' && showProjectDetail) {
+      setShowProjectDetail(false);
+      setSelectedProject(null);
+    }
+  }, [activeView, showProjectDetail]);
+
   const { user } = useAuth();
   const { projects, stages, commentTasks, brochureProjects } = useData();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);

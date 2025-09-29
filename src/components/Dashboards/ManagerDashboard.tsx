@@ -41,6 +41,14 @@ interface ManagerDashboardProps {
 }
 
 export function ManagerDashboard({ activeView, onViewChange }: ManagerDashboardProps) {
+  // Watch for activeView changes and reset project detail view when navigating
+  React.useEffect(() => {
+    if (activeView !== 'projects' && showProjectDetail) {
+      setShowProjectDetail(false);
+      setSelectedProject(null);
+    }
+  }, [activeView, showProjectDetail]);
+
   const { projects, stages, commentTasks, leads, users, brochureProjects, createLead, updateLead, deleteLead, createUserAccount, refreshUsers, loadProjects, updateProject } = useData();
   const { user } = useAuth();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
