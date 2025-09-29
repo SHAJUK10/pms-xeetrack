@@ -1019,14 +1019,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Load accessible project IDs and files on mount or user change
   useEffect(() => {
     if (user) {
-      fetchAccessibleProjectIds().then(ids => {
-        setAccessibleProjectIds(ids);
-        // Load all data when user is available
-        loadProjects();
-        refreshUsers();
-        loadStages();
-        await loadFiles();
-      }).catch(error => console.error('Error initializing data:', error));
+      const initializeData = async () => {
+        try {
+          const ids = await fetchAccessibleProjectIds();
+          setAccessibleProjectIds(ids);
+          // Load all data when user is available
+          await loadProjects();
+          await refreshUsers();
+          await loadStages();
+          await loadFiles();
+        } catch (error) {
+          console.error('Error initializing data:', error);
+        }
+      };
+
+      initializeData();
     }
   }, [user]);
 
