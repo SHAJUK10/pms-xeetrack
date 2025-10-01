@@ -1289,7 +1289,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       refreshUsers,
       loadProjects,
       loadFiles,
-      deleteFile
+      deleteFile,
+      loadGlobalComments
     }}>
       {children}
     </DataContext.Provider>
