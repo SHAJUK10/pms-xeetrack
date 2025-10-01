@@ -38,13 +38,20 @@ export function ProjectCommentSection({ project }: ProjectCommentSectionProps) {
     e.preventDefault();
     if (!newComment.trim() || !user || !hasAccess()) return;
 
-    addGlobalComment({
+    const commentPromise = addGlobalComment({
       project_id: project.id,
       text: newComment.trim(),
       added_by: user.id,
-      author_name: user.name,
       author_role: user.role
     });
+
+    // Handle the promise to show any errors
+    if (commentPromise) {
+      commentPromise.catch((error) => {
+        console.error('Error adding comment:', error);
+        alert('Error adding comment. Please try again.');
+      });
+    }
 
     setNewComment('');
   };

@@ -1138,6 +1138,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           await loadStages();
           await loadFiles();
           await loadTasks();
+          await loadGlobalComments();
         } catch (error) {
           console.error('Error initializing data:', error);
         }
