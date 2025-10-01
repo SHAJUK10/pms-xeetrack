@@ -58,6 +58,7 @@ interface DataContextType {
   loadProjects: () => Promise<void>;
   loadFiles: () => Promise<void>;
   deleteFile: (fileId: string, storagePath: string) => Promise<void>;
+  loadGlobalComments: () => Promise<void>;
 }
 
 // Supabase client
