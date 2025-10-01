@@ -69,27 +69,27 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 // Mock data (unchanged)
 const mockProjects: Project[] = [
   {
-    id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440001',
     title: 'Website for Xee Design',
     description: 'Complete website redesign and development for Xee Design agency with modern UI/UX, responsive design, and CMS integration',
-    client_id: '3',
+    client_id: '550e8400-e29b-41d4-a716-446655440003',
     client_name: 'Priya Sharma',
     deadline: '2025-03-15',
     progress_percentage: 65,
-    assigned_employees: ['2', '4'],
+    assigned_employees: ['550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440004'],
     created_at: '2025-01-01',
     status: 'active',
     priority: 'high'
   },
   {
-    id: '2',
+    id: '550e8400-e29b-41d4-a716-446655440002',
     title: 'E-commerce Mobile App',
     description: 'Native mobile application for online shopping with payment gateway integration and inventory management',
-    client_id: '5',
+    client_id: '550e8400-e29b-41d4-a716-446655440005',
     client_name: 'Rajesh Kumar',
     deadline: '2025-04-30',
     progress_percentage: 30,
-    assigned_employees: ['2'],
+    assigned_employees: ['550e8400-e29b-41d4-a716-446655440002'],
     created_at: '2025-01-10',
     status: 'active',
     priority: 'medium'
@@ -98,8 +98,8 @@ const mockProjects: Project[] = [
 
 const mockStages: Stage[] = [
   {
-    id: '1',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440011',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Planning',
     notes: 'Project requirements gathering, wireframes, and technical specifications completed',
     progress_percentage: 100,
@@ -109,8 +109,8 @@ const mockStages: Stage[] = [
     order: 0
   },
   {
-    id: '2',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440012',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Design',
     notes: 'UI/UX design mockups and prototypes ready for client review',
     progress_percentage: 90,
@@ -120,8 +120,8 @@ const mockStages: Stage[] = [
     order: 1
   },
   {
-    id: '3',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440013',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Development',
     notes: 'Frontend development in progress, backend API integration started',
     progress_percentage: 45,
@@ -134,36 +134,36 @@ const mockStages: Stage[] = [
 
 const mockCommentTasks: CommentTask[] = [
   {
-    id: '1',
-    stage_id: '2',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440021',
+    stage_id: '550e8400-e29b-41d4-a716-446655440012',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     text: 'Please update the color scheme to match our brand guidelines. The current blue is too dark.',
-    added_by: '3',
+    added_by: '550e8400-e29b-41d4-a716-446655440003',
     author_name: 'Priya Sharma',
     author_role: 'client',
     status: 'open',
-    assigned_to: '2',
+    assigned_to: '550e8400-e29b-41d4-a716-446655440002',
     timestamp: '2025-01-15T10:30:00Z'
   },
   {
-    id: '2',
-    stage_id: '3',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440022',
+    stage_id: '550e8400-e29b-41d4-a716-446655440013',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     text: 'Need to implement responsive design for mobile devices',
-    added_by: '1',
+    added_by: '550e8400-e29b-41d4-a716-446655440001',
     author_name: 'Arjun Singh',
     author_role: 'manager',
     status: 'in-progress',
-    assigned_to: '2',
+    assigned_to: '550e8400-e29b-41d4-a716-446655440002',
     deadline: '2025-02-01',
     timestamp: '2025-01-12T14:20:00Z'
   },
   {
-    id: '3',
-    stage_id: '3',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440023',
+    stage_id: '550e8400-e29b-41d4-a716-446655440013',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     text: 'Database optimization completed, performance improved by 40%',
-    added_by: '2',
+    added_by: '550e8400-e29b-41d4-a716-446655440002',
     author_name: 'Rakesh Gupta',
     author_role: 'employee',
     status: 'done',
@@ -173,12 +173,12 @@ const mockCommentTasks: CommentTask[] = [
 
 const mockFiles: File[] = [
   {
-    id: '1',
-    stage_id: '1',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440031',
+    stage_id: '550e8400-e29b-41d4-a716-446655440011',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     filename: 'project-requirements.pdf',
     file_url: '#',
-    uploaded_by: '1',
+    uploaded_by: '550e8400-e29b-41d4-a716-446655440001',
     uploader_name: 'Arjun Singh',
     timestamp: '2025-01-02T09:00:00Z',
     size: 2048576,
@@ -187,17 +187,17 @@ const mockFiles: File[] = [
     description: 'Initial project requirements and specifications',
     download_count: 5,
     last_downloaded: '2025-01-15T14:30:00Z',
-    last_downloaded_by: '2',
+    last_downloaded_by: '550e8400-e29b-41d4-a716-446655440002',
     is_archived: false,
     tags: ['requirements', 'initial', 'specifications']
   },
   {
-    id: '2',
-    stage_id: '2',
-    project_id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440032',
+    stage_id: '550e8400-e29b-41d4-a716-446655440012',
+    project_id: '550e8400-e29b-41d4-a716-446655440001',
     filename: 'design-mockups.fig',
     file_url: '#',
-    uploaded_by: '2',
+    uploaded_by: '550e8400-e29b-41d4-a716-446655440002',
     uploader_name: 'Rakesh Gupta',
     timestamp: '2025-01-08T11:15:00Z',
     size: 5242880,
@@ -206,7 +206,7 @@ const mockFiles: File[] = [
     description: 'Figma design mockups for homepage and key pages',
     download_count: 3,
     last_downloaded: '2025-01-14T16:20:00Z',
-    last_downloaded_by: '3',
+    last_downloaded_by: '550e8400-e29b-41d4-a716-446655440003',
     is_archived: false,
     tags: ['design', 'mockups', 'figma']
   }
