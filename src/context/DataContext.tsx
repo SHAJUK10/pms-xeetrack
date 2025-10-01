@@ -383,16 +383,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
         return (data || []).map((p: any) => p.id as string);
       } else if (user.role === 'employee') {
-        // Employee can access projects where they are assigned
+        // Employee can access projects where they are assigned (using contains operator on assigned_employees array)
         const { data, error } = await supabase
-          .from('project_assignments')
-          .select('project_id')
-          .eq('employee_id', user.id);
+          .from('projects')
+          .select('id')
+          .contains('assigned_employees', [user.id]);
         if (error) {
           console.error('Error fetching employee-accessible projects:', error);
           return [];
         }
-        return (data || []).map((p: any) => p.project_id as string);
+        return (data || []).map((p: any) => p.id as string);
       } else if (user.role === 'manager') {
         // Manager can access all projects
         const { data, error } = await supabase
