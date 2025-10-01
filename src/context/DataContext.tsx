@@ -232,7 +232,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistory[]>([]);
   const [accessibleProjectIds, setAccessibleProjectIds] = useState<string[] | null>(null);
 
-  const loadStages = async () => {
+  const loadStages = useCallback(async () => {
     if (!supabase || !user) {
       console.warn('Supabase or user not available - cannot load stages');
       return;
@@ -270,13 +270,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error loading stages:', error);
     }
-  };
+  }, [supabase, user]);
 
   // Load projects from database
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     if (!supabase || !user) {
       console.warn('Supabase or user not available - cannot load projects');
-      return;
+      return [];
     }
 
     try {
@@ -297,7 +297,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Error loading projects:', error);
-        return;
+        return [];
       }
 
       if (data) {
@@ -317,14 +317,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
         
         setProjects(mappedProjects);
         console.log('Projects loaded successfully:', mappedProjects.length);
+        return mappedProjects;
       }
     } catch (error) {
       console.error('Error loading projects:', error);
     }
-  };
+    return [];
+  }, [supabase, user]);
 
   // Load users from database
-  const refreshUsers = async () => {
+  const refreshUsers = useCallback(async () => {
     if (!supabase) {
       console.warn('Supabase not configured - cannot load users');
       return;
@@ -357,7 +359,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error loading users:', error);
     }
-  };
+  }, [supabase]);
 
   // Create new project
   const createProject = async (project: Omit<Project, 'id' | 'created_at'>) => {
@@ -470,7 +472,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Load files from database
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     if (!supabase) {
       console.warn('Supabase not configured - cannot load files');
       return;
@@ -518,10 +520,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.warn('Using mock files data instead.');
       // Don't throw the error, just log it and continue with existing mock data
     }
-  };
+  }, [supabase]);
 
   // Load tasks from database
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async (userProjects?: Project[]) => {
     if (!supabase || !user) {
       console.warn('Supabase or user not available - cannot load tasks');
       return;
@@ -535,7 +537,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // Apply role-based filtering
       if (user.role === 'client') {
         // Clients can see tasks in their projects
-        const clientProjects = projects.map(p => p.id);
+        const clientProjects = (userProjects || projects).map(p => p.id);
         if (clientProjects.length > 0) {
           query = query.in('project_id', clientProjects);
         } else {
@@ -545,7 +547,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       } else if (user.role === 'employee') {
         // Employees can see tasks assigned to them or in their assigned projects
-        const assignedProjects = projects.filter(p => p.assigned_employees.includes(user.id)).map(p => p.id);
+        const assignedProjects = (userProjects || projects).filter(p => p.assigned_employees.includes(user.id)).map(p => p.id);
         if (assignedProjects.length > 0) {
           query = query.or(`assigned_to.eq.${user.id},and(project_id.in.(${assignedProjects.join(',')}))`);
         } else {
@@ -572,7 +574,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           status: task.status || 'open',
           priority: task.priority || 'medium',
           deadline: task.deadline,
-          created_at: task.created_at,
+  const loadGlobalComments = useCallback(async (userProjects?: Project[]) => {
           updated_at: task.updated_at
         }));
         
@@ -583,9 +585,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.error('Error loading tasks:', error);
       console.warn('Failed to load tasks from Supabase. Using existing task data.');
     }
-  };
+  }, [supabase, user, projects]);
+
   // Compute project IDs the current user can access (role-based)
-  const fetchAccessibleProjectIds = async (): Promise<string[] | null> => {
+        const clientProjects = (userProjects || projects).map(p => p.id);
     if (!supabase || !user) {
       console.warn('Supabase or user not available');
       return null;
@@ -595,7 +598,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.log('Fetching accessible project IDs for user:', user.id, 'Role:', user.role);
       if (user.role === 'client') {
         // Client can access only their projects
-        const { data, error } = await supabase
+        const assignedProjects = (userProjects || projects).filter(p => p.assigned_employees.includes(user.id)).map(p => p.id);
           .from('projects')
           .select('id')
           .eq('client_id', user.id);
@@ -631,7 +634,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching accessible project IDs:', error);
       return [];
     }
-  };
+  }, [supabase, user, projects]);
 
   // Upload file from input (modified for Storage Section)
   const uploadFileFromInput = async (stageId: string, file: globalThis.File, uploaderName: string) => {
@@ -1221,12 +1224,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
           console.log('Accessible project IDs:', ids);
           setAccessibleProjectIds(ids);
           // Load all data when user is available
-          await loadProjects();
+          const userProjects = await loadProjects();
           await refreshUsers();
           await loadStages();
           await loadFiles();
-          await loadTasks();
-          await loadGlobalComments();
+          await loadTasks(userProjects);
+          await loadGlobalComments(userProjects);
         } catch (error) {
           console.error('Error initializing data:', error);
         }
@@ -1234,7 +1237,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       initializeData();
     }
-  }, [user]);
+  }, [user, fetchAccessibleProjectIds, loadProjects, refreshUsers, loadStages, loadFiles, loadTasks, loadGlobalComments]);
 
   return (
     <DataContext.Provider value={{
