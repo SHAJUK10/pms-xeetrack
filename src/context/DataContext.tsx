@@ -32,8 +32,8 @@ interface DataContextType {
   scheduleMeeting: (meeting: Omit<Meeting, 'id'>) => void;
   createTask: (task: Omit<Task, 'id' | 'created_at'>) => void;
   updateTaskStatus: (taskId: string, status: 'open' | 'in-progress' | 'done') => void;
-  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
-  deleteTask: (taskId: string) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Task>) => void;
+  deleteTask: (taskId: string) => void;
   createBrochureProject: (projectId: string, clientId: string, clientName: string) => Promise<BrochureProject | null>;
   updateBrochureProject: (id: string, updates: Partial<BrochureProject>) => void;
   deleteBrochurePage: (projectId: string, pageNumber: number) => Promise<void>;
@@ -546,7 +546,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // Employees can see tasks assigned to them or in their assigned projects
         const assignedProjects = projects.filter(p => p.assigned_employees.includes(user.id)).map(p => p.id);
         if (assignedProjects.length > 0) {
-          query = query.or(`assigned_to.eq.${user.id},project_id.in.(${assignedProjects.join(',')})`);
+          query = query.or(`assigned_to.eq.${user.id},and(project_id.in.(${assignedProjects.join(',')}))`);
         } else {
           query = query.eq('assigned_to', user.id);
         }
@@ -567,6 +567,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           title: task.title,
           description: task.description,
           assigned_to: task.assigned_to,
+          created_by: task.created_by,
           status: task.status || 'open',
           priority: task.priority || 'medium',
           deadline: task.deadline,
