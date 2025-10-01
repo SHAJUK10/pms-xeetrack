@@ -567,7 +567,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           title: task.title,
           description: task.description,
           assigned_to: task.assigned_to,
-          created_by: task.created_by,
+          created_by: task.created_by || task.assigned_to, // fallback for existing tasks
           status: task.status || 'open',
           priority: task.priority || 'medium',
           deadline: task.deadline,
@@ -755,16 +755,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
   
   const addGlobalComment = (data: { project_id: string; text: string; added_by: string; author_role: string }) => {
-    const newComment: GlobalComment = {
-      id: uuidv4(),
-      project_id: data.project_id,
-      text: data.text,
-      added_by: data.add_by,
-      author_name: user?.name || 'Unknown',
-      author_role: data.author_role as 'manager' | 'employee' | 'client',
-      timestamp: new Date().toISOString()
+    if (!supabase || !user) {
+      console.warn('Supabase or user not available - cannot add global comment');
+      return;
+    }
+
+    const addCommentAsync = async () => {
+      try {
+        console.log('Adding global comment to project:', data.project_id);
+        
+        const commentData = {
+          project_id: data.project_id,
+          text: data.text,
+          added_by: user.id,
+          author_name: user.name,
+          author_role: user.role
+        };
+
+        const { data: insertData, error } = await supabase
+          .from('global_comments')
+          .insert(commentData)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error adding global comment:', error);
+          throw error;
+        }
+
+        console.log('Global comment added successfully:', insertData.id);
+        
+        // Reload global comments to update the UI
+        await loadGlobalComments();
+        
+      } catch (error) {
+        console.error('Error adding global comment:', error);
+        throw error;
+      }
     };
-    setGlobalComments(prev => [...prev, newComment]);
+
+    return addCommentAsync();
   };
   
   const updateCommentTaskStatus = (taskId: string, status: 'open' | 'in-progress' | 'done') => {
@@ -834,13 +864,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setMeetings(prev => [...prev, newMeeting]);
   };
   
-  const createTask = (task: Omit<Task, 'id' | 'created_at'>) => {
-    const newTask: Task = {
-      ...task,
-      id: uuidv4(),
-      created_at: new Date().toISOString()
-    };
-    setTasks(prev => [...prev, newTask]);
+  const createTask = async (task: Omit<Task, 'id' | 'created_at'>) => {
+    if (!supabase || !user) {
+      console.warn('Supabase or user not available - cannot create task');
+      return;
+    }
+
+    try {
+      console.log('Creating new task:', task.title);
+      
+      const taskData = {
+        project_id: task.project_id,
+        title: task.title,
+        description: task.description,
+        assigned_to: task.assigned_to,
+        created_by: user.id,
+        status: task.status || 'open',
+        priority: task.priority || 'medium',
+        deadline: task.deadline || null
+      };
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert(taskData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating task:', error);
+        throw error;
+      }
+
+      console.log('Task created successfully:', data.id);
+      
+      // Reload tasks to update the UI
+      await loadTasks();
+      
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
   };
   
   const updateTaskStatus = (taskId: string, status: 'open' | 'in-progress' | 'done') => {
@@ -880,11 +943,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
   
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
-    setTasks(prev => 
-      prev.map(task => 
-        task.id === taskId ? { ...task, ...updates } : task
-      )
-    );
+    if (!supabase) {
+      console.warn('Supabase not configured - cannot update task');
+      return;
+    }
+
+    try {
+      console.log('Updating task:', taskId, updates);
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', taskId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating task:', error);
+        throw error;
+      }
+
+      console.log('Task updated successfully:', data.id);
+      
+      // Reload tasks to update the UI
+      await loadTasks();
+      
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
   };
   
   const deleteTask = async (taskId: string) => {
