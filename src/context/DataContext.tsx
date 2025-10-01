@@ -574,7 +574,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
           status: task.status || 'open',
           priority: task.priority || 'medium',
           deadline: task.deadline,
-  const loadGlobalComments = useCallback(async (userProjects?: Project[]) => {
           updated_at: task.updated_at
         }));
         
@@ -587,6 +586,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [supabase, user, projects]);
 
+  // Load global comments from database
+  const loadGlobalComments = useCallback(async (userProjects?: Project[]) => {
   // Compute project IDs the current user can access (role-based)
         const clientProjects = (userProjects || projects).map(p => p.id);
     if (!supabase || !user) {
