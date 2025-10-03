@@ -282,9 +282,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     try {
       console.log('Loading projects for user:', user.id, 'Role:', user.role);
-      
+
       let query = supabase.from('projects').select('*').order('created_at', { ascending: false });
-      
+
       // Apply role-based filtering
       if (user.role === 'client') {
         query = query.eq('client_id', user.id);
@@ -298,6 +298,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Error loading projects:', error);
+        if (error.message?.includes('Failed to fetch')) {
+          console.error('Database connection failed. Please verify your Supabase URL and anon key are valid.');
+        }
         return [];
       }
 
@@ -315,13 +318,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
           status: project.status || 'active',
           priority: project.priority || 'medium'
         }));
-        
+
         setProjects(mappedProjects);
         console.log('Projects loaded successfully:', mappedProjects.length);
         return mappedProjects;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading projects:', error);
+      if (error?.message?.includes('Failed to fetch')) {
+        console.error('Database connection failed. Please check your Supabase configuration in the .env file.');
+      }
     }
     return [];
   }, [supabase, user]);
@@ -379,6 +385,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           .eq('client_id', user.id);
         if (error) {
           console.error('Error fetching client-accessible projects:', error);
+          if (error.message?.includes('Failed to fetch')) {
+            console.error('Database connection failed. Please verify your Supabase configuration.');
+          }
           return [];
         }
         return (data || []).map((p: any) => p.id as string);
@@ -390,6 +399,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
           .contains('assigned_employees', [user.id]);
         if (error) {
           console.error('Error fetching employee-accessible projects:', error);
+          if (error.message?.includes('Failed to fetch')) {
+            console.error('Database connection failed. Please verify your Supabase configuration.');
+          }
           return [];
         }
         return (data || []).map((p: any) => p.id as string);
@@ -400,13 +412,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
           .select('id');
         if (error) {
           console.error('Error fetching manager-accessible projects:', error);
+          if (error.message?.includes('Failed to fetch')) {
+            console.error('Database connection failed. Please verify your Supabase configuration.');
+          }
           return [];
         }
         return (data || []).map((p: any) => p.id as string);
       }
       return [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching accessible project IDs:', error);
+      if (error?.message?.includes('Failed to fetch')) {
+        console.error('Database connection failed. Please verify your Supabase URL and anon key in .env file.');
+      }
       return [];
     }
   }, [supabase, user]);
