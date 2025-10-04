@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Project, Stage, CommentTask, GlobalComment, File, Task, Meeting, BrochureProject, BrochurePage, PageComment, Lead, STAGE_NAMES, DownloadHistory, User } from '../types';
+import { Project, Stage, CommentTask, GlobalComment, File, Task, Meeting, BrochureProject, BrochurePage, PageComment, Lead, STAGE_NAMES, DownloadHistory, User, FormattedContent } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { supabase as externalSupabase } from '../superBaseClient';
@@ -23,7 +23,7 @@ interface DataContextType {
   createProject: (project: Omit<Project, 'id' | 'created_at'>) => void;
   updateProject: (id: string, updates: Partial<Project>) => void;
   addCommentTask: (data: Omit<CommentTask, 'id' | 'timestamp'>) => void;
-  addGlobalComment: (data: { project_id: string; text: string; added_by: string; author_role: string }) => void;
+  addGlobalComment: (data: { project_id: string; text: string; formatted_content?: FormattedContent; added_by: string; author_role: string }) => void;
   updateCommentTaskStatus: (taskId: string, status: 'open' | 'in-progress' | 'done') => void;
   updateStageApproval: (stageId: string, status: 'approved' | 'rejected', comment?: string) => void;
   uploadFile: (fileData: Omit<File, 'id' | 'timestamp'>) => void;
@@ -462,12 +462,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
           id: comment.id,
           project_id: comment.project_id,
           text: comment.text,
+          formatted_content: comment.formatted_content,
           added_by: comment.added_by,
           author_name: comment.author_name || 'Unknown',
           author_role: comment.author_role,
           timestamp: comment.timestamp
         }));
-        
+
         setGlobalComments(mappedComments);
         console.log('Global comments loaded successfully:', mappedComments.length);
       }
@@ -822,7 +823,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setCommentTasks(prev => [...prev, newTask]);
   };
   
-  const addGlobalComment = (data: { project_id: string; text: string; added_by: string; author_role: string }) => {
+  const addGlobalComment = (data: { project_id: string; text: string; formatted_content?: FormattedContent; added_by: string; author_role: string }) => {
     if (!supabase || !user) {
       console.warn('Supabase or user not available - cannot add global comment');
       return;
@@ -831,10 +832,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const addCommentAsync = async () => {
       try {
         console.log('Adding global comment to project:', data.project_id);
-        
+
         const commentData = {
           project_id: data.project_id,
           text: data.text,
+          formatted_content: data.formatted_content,
           added_by: user.id,
           author_name: user.name,
           author_role: user.role
@@ -852,10 +854,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
 
         console.log('Global comment added successfully:', insertData.id);
-        
-        // Reload global comments to update the UI
+
         await loadGlobalComments();
-        
+
       } catch (error) {
         console.error('Error adding global comment:', error);
         throw error;

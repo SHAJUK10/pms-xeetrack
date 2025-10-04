@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { MessageSquare, Send, CheckCircle, User } from 'lucide-react';
+import { FormattedTextarea } from './FormattedTextarea';
+import { FormattedTextDisplay } from './FormattedTextDisplay';
+import { FormattedContent } from '../../types';
 
 interface CommentSectionProps {
   stageId: string;
@@ -11,6 +14,7 @@ export function CommentSection({ stageId }: CommentSectionProps) {
   const { user } = useAuth();
   const { commentTasks, addCommentTask, stages, updateCommentTaskStatus } = useData();
   const [newComment, setNewComment] = useState('');
+  const [formattedContent, setFormattedContent] = useState<FormattedContent | undefined>(undefined);
 
   const stageComments = commentTasks.filter(comment => comment.stage_id === stageId)
                               .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -19,13 +23,13 @@ export function CommentSection({ stageId }: CommentSectionProps) {
     e.preventDefault();
     if (!newComment.trim()) return;
 
-    // Find the project ID for this stage
     const stage = stages.find(s => s.id === stageId);
     if (stage) {
       addCommentTask({
         stage_id: stageId,
         project_id: stage.project_id,
         text: newComment.trim(),
+        formatted_content: formattedContent,
         added_by: user?.id || '',
         author_name: user?.name || 'Unknown',
         author_role: user?.role || 'employee',
@@ -33,6 +37,7 @@ export function CommentSection({ stageId }: CommentSectionProps) {
       });
     }
     setNewComment('');
+    setFormattedContent(undefined);
   };
 
   const getRoleColor = (role: string) => {
@@ -56,25 +61,24 @@ export function CommentSection({ stageId }: CommentSectionProps) {
 
       {/* Add Comment Form */}
       <form onSubmit={handleSubmit} className="mb-6">
-        <div className="flex space-x-3">
-          <div className="flex-1">
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment or feedback..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={!newComment.trim()}
-            className="self-end bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
-          >
-            <Send className="w-4 h-4" />
-            <span>Send</span>
-          </button>
-        </div>
+        <FormattedTextarea
+          value={newComment}
+          onChange={(value, formatted) => {
+            setNewComment(value);
+            setFormattedContent(formatted);
+          }}
+          placeholder="Add a comment or feedback..."
+          rows={3}
+          className="mb-3"
+        />
+        <button
+          type="submit"
+          disabled={!newComment.trim()}
+          className="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
+        >
+          <Send className="w-4 h-4" />
+          <span>Send</span>
+        </button>
       </form>
 
       {/* Comments List */}
@@ -101,7 +105,11 @@ export function CommentSection({ stageId }: CommentSectionProps) {
               </div>
             </div>
             
-            <p className="text-gray-700 mb-3">{comment.text}</p>
+            <FormattedTextDisplay
+              text={comment.text}
+              formattedContent={comment.formatted_content}
+              className="mb-3"
+            />
             
             {user?.role === 'employee' && comment.status !== 'done' && comment.author_role !== 'employee' && (
               <button

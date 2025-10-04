@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
-import { Project } from '../../types';
+import { Project, FormattedContent } from '../../types';
 import { MessageSquare, Send, User, Clock } from 'lucide-react';
+import { FormattedTextarea } from './FormattedTextarea';
+import { FormattedTextDisplay } from './FormattedTextDisplay';
 
 interface ProjectCommentSectionProps {
   project: Project;
@@ -12,6 +14,7 @@ export function ProjectCommentSection({ project }: ProjectCommentSectionProps) {
   const { user } = useAuth();
   const { globalComments, addGlobalComment } = useData();
   const [newComment, setNewComment] = useState('');
+  const [formattedContent, setFormattedContent] = useState<FormattedContent | undefined>(undefined);
 
   // Get comments for this project
   const projectComments = globalComments
@@ -41,11 +44,11 @@ export function ProjectCommentSection({ project }: ProjectCommentSectionProps) {
     const commentPromise = addGlobalComment({
       project_id: project.id,
       text: newComment.trim(),
+      formatted_content: formattedContent,
       added_by: user.id,
       author_role: user.role
     });
 
-    // Handle the promise to show any errors
     if (commentPromise) {
       commentPromise.catch((error) => {
         console.error('Error adding comment:', error);
@@ -54,6 +57,7 @@ export function ProjectCommentSection({ project }: ProjectCommentSectionProps) {
     }
 
     setNewComment('');
+    setFormattedContent(undefined);
   };
 
   const getRoleColor = (role: string) => {
@@ -121,14 +125,14 @@ export function ProjectCommentSection({ project }: ProjectCommentSectionProps) {
             <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
               Add a comment
             </label>
-            <textarea
-              id="comment"
+            <FormattedTextarea
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={(value, formatted) => {
+                setNewComment(value);
+                setFormattedContent(formatted);
+              }}
               placeholder="Share your thoughts, updates, or questions about this project..."
               rows={4}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-lg ${theme.focus} resize-none`}
-              required
             />
           </div>
           <div className="flex justify-end">
@@ -169,7 +173,11 @@ export function ProjectCommentSection({ project }: ProjectCommentSectionProps) {
             </div>
             
             <div className="ml-13">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{comment.text}</p>
+              <FormattedTextDisplay
+                text={comment.text}
+                formattedContent={comment.formatted_content}
+                className="leading-relaxed"
+              />
             </div>
           </div>
         ))}

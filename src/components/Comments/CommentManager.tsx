@@ -3,11 +3,14 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { MessageSquare, Send, User, Filter } from 'lucide-react';
 import { TaskCard } from '../Tasks/TaskCard';
+import { FormattedTextarea } from './FormattedTextarea';
+import { FormattedContent } from '../../types';
 
 export function CommentManager() {
   const { user } = useAuth();
   const { commentTasks, globalComments, addCommentTask, addGlobalComment, projects } = useData();
   const [newComment, setNewComment] = useState('');
+  const [formattedContent, setFormattedContent] = useState<FormattedContent | undefined>(undefined);
   const [selectedProject, setSelectedProject] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
 
@@ -55,11 +58,11 @@ export function CommentManager() {
     e.preventDefault();
     if (!newComment.trim() || selectedProject === 'all') return;
 
-    // Client comments automatically become tasks
     if (user?.role === 'client') {
       addCommentTask({
         project_id: selectedProject,
         text: newComment.trim(),
+        formatted_content: formattedContent,
         added_by: user.id,
         author_name: user.name,
         author_role: user.role,
@@ -69,6 +72,7 @@ export function CommentManager() {
       addGlobalComment({
         project_id: selectedProject,
         text: newComment.trim(),
+        formatted_content: formattedContent,
         added_by: user.id,
         author_name: user.name,
         author_role: user.role
@@ -76,6 +80,7 @@ export function CommentManager() {
     }
 
     setNewComment('');
+    setFormattedContent(undefined);
   };
 
   const filteredTasks = getFilteredCommentTasks();
@@ -110,16 +115,17 @@ export function CommentManager() {
             </select>
           </div>
           
-          <textarea
+          <FormattedTextarea
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder={user?.role === 'client' 
+            onChange={(value, formatted) => {
+              setNewComment(value);
+              setFormattedContent(formatted);
+            }}
+            placeholder={user?.role === 'client'
               ? "Describe what you need or any feedback (this will create a task for the team)..."
               : "Add a comment or create a task..."
             }
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            required
           />
           
           <button

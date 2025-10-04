@@ -32,11 +32,22 @@ export interface Stage {
   order: number;
 }
 
+export interface FormattedContent {
+  version: number;
+  blocks: Array<{
+    type: 'text' | 'list';
+    content?: string;
+    formatting?: Array<'bold' | 'italic'>;
+    items?: string[];
+  }>;
+}
+
 export interface CommentTask {
   id: string;
   stage_id?: string;
   project_id?: string;
   text: string;
+  formatted_content?: FormattedContent;
   added_by: string;
   author_name: string;
   author_role: 'manager' | 'employee' | 'client';
@@ -51,6 +62,7 @@ export interface GlobalComment {
   id: string;
   project_id: string;
   text: string;
+  formatted_content?: FormattedContent;
   added_by: string;
   author_name: string;
   author_role: 'manager' | 'employee' | 'client';
@@ -172,6 +184,7 @@ export interface PageComment {
   id: string;
   page_id: string;
   text: string;
+  formatted_content?: FormattedContent;
   added_by: string;
   author_name: string;
   author_role: 'manager' | 'employee' | 'client';
@@ -231,6 +244,7 @@ export interface PageComment {
   id: string;
   page_id: string;
   text: string;
+  formatted_content?: FormattedContent;
   added_by: string;
   author_name: string;
   author_role: 'manager' | 'employee' | 'client';

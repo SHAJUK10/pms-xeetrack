@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { MessageSquare, Send, CheckCircle, User, Clock } from 'lucide-react';
+import { FormattedTextarea } from '../Comments/FormattedTextarea';
+import { FormattedTextDisplay } from '../Comments/FormattedTextDisplay';
+import { FormattedContent } from '../../types';
 
 interface PageCommentsProps {
   pageId: string;
@@ -13,6 +16,7 @@ export function PageComments({ pageId, projectId, pageNumber }: PageCommentsProp
   const { user } = useAuth();
   const { addPageComment, getPageComments, markCommentDone } = useData();
   const [newComment, setNewComment] = useState('');
+  const [formattedContent, setFormattedContent] = useState<FormattedContent | undefined>(undefined);
 
   const comments = getPageComments(pageId);
   const canAddComments = user?.role === 'manager' || user?.role === 'employee';
@@ -24,6 +28,7 @@ export function PageComments({ pageId, projectId, pageNumber }: PageCommentsProp
     addPageComment({
       page_id: pageId,
       text: newComment.trim(),
+      formatted_content: formattedContent,
       added_by: user.id,
       author_name: user.name,
       author_role: user.role,
@@ -31,6 +36,7 @@ export function PageComments({ pageId, projectId, pageNumber }: PageCommentsProp
     });
 
     setNewComment('');
+    setFormattedContent(undefined);
   };
 
   const handleMarkDone = (commentId: string) => {
@@ -68,18 +74,20 @@ export function PageComments({ pageId, projectId, pageNumber }: PageCommentsProp
       {canAddComments && (
         <form onSubmit={handleSubmit} className="mb-4">
           <div className="space-y-3">
-            <textarea
+            <FormattedTextarea
               value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
+              onChange={(value, formatted) => {
+                setNewComment(value);
+                setFormattedContent(formatted);
+              }}
               placeholder="Add a comment or feedback for this page..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm resize-none"
             />
             <button
               type="submit"
               disabled={!newComment.trim()}
               className={`w-full px-3 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 text-sm text-white ${
-                user?.role === 'manager' 
+                user?.role === 'manager'
                   ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400'
                   : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400'
               }`}
@@ -123,7 +131,11 @@ export function PageComments({ pageId, projectId, pageNumber }: PageCommentsProp
               )}
             </div>
             
-            <p className="text-gray-700 mb-2">{comment.text}</p>
+            <FormattedTextDisplay
+              text={comment.text}
+              formattedContent={comment.formatted_content}
+              className="mb-2 text-sm"
+            />
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1 text-xs text-gray-500">
